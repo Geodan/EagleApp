@@ -1,9 +1,11 @@
 {
   "entrypoint": "index.html",
-  "shell": "src/my-app.html",
+  "shell": "src/main-app.html",
   "fragments": [
-    "src/my-view1.html",
-    "src/my-view2.html",
-    "src/my-view3.html"
-  ]
+     "src/chat-view.html",
+     "src/users-view.html",
+     "src/incidents-view.html",
+     "src/map-view.html"
+     ]
 }
+
