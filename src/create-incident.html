@@ -1,0 +1,104 @@
+<!--
+	Create, update or delete incident
+-->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+
+<link rel="import" href="../bower_components/mappu-elements/mappu-map.html">
+<link rel="import" href="../bower_components/gm-elements/gm-geosearch.html">
+
+<dom-module id="create-incident">
+    <style include="iron-flex iron-flex-alignment"></style>
+        <style>
+        #paper-button {
+            background: steelBlue;
+            color: yellow;
+        }
+        #mapelement {
+            height: 400px;
+            width: 100%;
+            position: relative;
+            display: block;
+        }
+        gm-geosearch {
+            position: absolute;
+            top: 0px;
+            left: 10px;
+        }
+
+        .input {
+            padding: 10px;
+        }
+
+    </style>
+    <template>
+        <div id='inputs' class="layout horizontal">
+            <paper-input id="name" class='input' label="Naam"></paper-input>
+            <paper-dropdown-menu class='input' label="Scenario">
+                <paper-menu class="dropdown-content" selected="0">
+                    <paper-item>Overstroming</paper-item>
+                    <paper-item>Heidebrand</paper-item>
+                    <paper-item>Aardbeving</paper-item>
+                    <paper-item>Tsunami</paper-item>
+                </paper-menu>
+            </paper-dropdown-menu>
+        </div>
+        <mappu-map
+                id='mapelement'
+                map="{{map}}"
+        >
+            <gm-geosearch></gm-geosearch>
+        </mappu-map>
+        <paper-button on-click="add">Voeg toe</paper-button>
+
+    </template>
+</dom-module>
+<script>
+
+    Polymer({
+        is: 'create-incident',
+        properties: {
+            map: {
+                type: Object
+
+            },
+
+        },
+        add: function(a,b,c){
+            var name = this.$.name.value;
+            var center = this.$.mapelement.map.center;
+            var zoom = this.$.mapelement.map.zoom;
+            this.fire('newincident',{msg: {name: name, center: center, zoom: zoom}});
+        },
+        ready: function(){
+            var self = this;
+            this.addEventListener('goto-coords',function(c){
+                self.map.center = c.detail;
+                self.map.redraw();
+            });
+            this.activate();
+        },
+        activate: function(){
+            this.startlocation = {lng:5.124892,lat:51.865394,zoom: 16};
+            var center = this.startlocation;
+            this.map.center = [center.lng,center.lat];
+            var self = this;
+            window.setTimeout(function(){
+                self.map.zoom = center.zoom;
+                self.map.resize();
+            },1000); //TODO
+        },
+        name: function(d){
+            return d.data('name');
+        },
+        date: function(d){
+            return new Date(d.created()).toLocaleString();
+        }
+
+    });
+</script>

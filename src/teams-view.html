@@ -1,0 +1,72 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+
+<dom-module id="teams-view">
+
+  <!-- Defines the element's style and local DOM -->
+  <template>
+      <style include="iron-flex iron-flex-alignment"></style>
+    <style>
+      :host {
+        display: block;
+        padding: 16px;
+      }
+      .teamcard {
+  		cursor: pointer;
+  		margin-top: 10px;
+  		display: block;
+        max-width: 400px;
+  	}
+  	.teamcard:hover {
+  		background: steelBlue;
+  	}
+    </style>
+    <div name='users'>
+     <h2>Teams</h2>
+        <p>Kies het team waarmee u gaat werken</p>
+     <iron-selector selected="{{selectedteam}}" class='layout vertical'>
+        <template is='dom-repeat' items='[[teams]]'>
+            <paper-card class='teamcard' heading="{{item.id}}">
+                <div class="card-content">{{item.text}}</div>
+            </paper-card>
+        </template>
+        </iron-selector>
+    </div>
+  </template>
+
+  <!-- Creates the element's prototype and registers it -->
+  <script>
+    Polymer({
+        is: 'teams-view',
+        properties: {
+            route: Object,
+            teams: Array,
+            selectedteam: {
+                type: String,
+                notify: true
+            }
+
+        },
+        ready: function(){
+
+        },
+        _teamChanged: function(team){
+        	//Spoofin an account for cow-connector
+        	this.account = {
+        		id: this.teams[team].id,
+        		name: this.teams[team].id
+        	};
+            /*
+        	this.selected = 'projects';
+        	if (!this.core.users(this.teams[team].id)){
+        		this.core.users({_id: this.teams[team].id}).sync();
+        	}
+        	this.core.user(this.teams[team].id);
+            */
+        }
+    });
+  </script>
+
+</dom-module>

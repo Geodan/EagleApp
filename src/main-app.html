@@ -1,0 +1,258 @@
+<!--
+@license
+Copyright (c) 2016 Geodan
+-->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/cow-elements/cow-core.html">
+<link rel="import" href="../bower_components/cow-elements/cow-connector.html">
+<link rel="import" href="../bower_components/cow-elements/cow-status.html">
+<link rel="import" href="../bower_components/gm-elements/gm-cas-core.html">
+<link rel="import" href="../bower_components/gm-elements/gm-cas-icon.html">
+
+<script src="../config/config.js"></script>
+
+<dom-module id="main-app">
+
+  <template>
+      <style include="iron-flex iron-flex-alignment"></style>
+    <style>
+
+      :host {
+        display: block;
+        --app-primary-color: #4285f4;
+        --app-secondary-color: black;
+      }
+      app-toolbar {
+          background-color: var(--app-primary-color);
+          color: #fff;
+      }
+      app-header {
+        background-color: var(--app-primary-color);
+        color: #fff;
+      }
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      .drawer-list {
+        margin: 0 20px;
+      }
+      .drawer-list a {
+        display: block;
+        padding: 0 16px;
+        line-height: 40px;
+        text-decoration: none;
+        color: var(--app-secondary-color);
+      }
+      .drawer-list a.iron-selected {
+        color: black;
+        font-weight: bold;
+      }
+      .drawer-list a.subroute {
+        padding-left: 32px;
+      }
+
+      paper-item {
+      	  cursor: pointer;
+      }
+
+
+    </style>
+
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="/:page"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+
+    <gm-cas-core id='cascore'
+            account="{{account}}"
+            loggedin="{{loggedin}}"
+            ></gm-cas-core>
+
+    <cow-core id="cow_core" config="[[cowconfig]]" core="{{core}}"></cow-core>
+    <cow-connector id="cowconnector"
+		itemconfig = "{{itemconfig}}"
+		account="[[account]]"
+		core="[[core]]"
+		selectedproject="{{selectedproject}}"
+		project="{{curproject}}"
+		users="{{users}}"
+		projects="{{projects}}"
+		activeuser="{{activeuser}}"
+		textitems="{{textitems}}"
+		featureitems="{{featureitems}}"
+		chatitems="{{chatitems}}"
+		itemstore="{{itemstore}}"
+		startlocation="{{startlocation}}"
+		></cow-connector>
+      <paper-dialog id='infodialog' opened="{{infodialog}}">
+          <h2>Informatie</h2>
+          <paper-dialog-scrollable>
+              Hier komt de informatieve tekst die hoort bij het scenario
+          </paper-dialog-scrollable>
+          <div class="buttons">
+              <paper-button dialog-confirm>OK</paper-button>
+          </div>
+      </paper-dialog>
+    <app-drawer-layout fullbleed>
+
+      <!-- Drawer content -->
+      <app-drawer>
+        <app-toolbar><img src="../images/app-icon-32.png"></app-toolbar>
+        <gm-cas-icon
+            account=[[account]]
+            loggedin=[[loggedin]]
+            ></gm-cas-icon>
+
+        <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
+        <!-- DISABLED ROUTING
+          <a name="teams" href="./teams">Team</a>
+          <template is="dom-if" if="[[account]]">
+              <a name="incidents" href="./incidents">Incident</a>
+          </template>
+          <template is="dom-if" if="[[curproject]]">
+              <a name="map" href="./map">Kaart</a>
+          </template>
+          -->
+          <template is="dom-if" if="[[loggedin]]">
+              <paper-item name='users'>Personen</paper-item>
+              <paper-item name='incidents'>Incidenten</paper-item>
+          </template>
+          <template is="dom-if" if="[[curproject]]">
+              <paper-item name='map'>Kaart</paper-item>
+          </template>
+        </iron-selector>
+      </app-drawer>
+
+      <!-- Main content -->
+      <app-header-layout has-scrolling-region>
+
+        <app-header fixed>
+          <app-toolbar class="layout horizontal">
+
+                <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+                <div class="flex">[[_getProjectName(selectedproject)]]</div>
+                <paper-icon-button icon='info' toggles active='{{infodialog}}'></paper-icon-button>
+                <cow-status core="[[core]]" connected="{{cowconnected}}"></cow-status>
+                <template is="dom-if" if="[[!cowconnected]]">COW!</template>
+          </app-toolbar>
+        </app-header>
+
+        <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
+          <notloggedin-view name='notloggedin'></notloggedin-view>
+          <users-view name="users" selecteduser={{selecteduser}} users=[[users]]></users-view>
+          <incidents-view name="incidents" selectedproject={{selectedproject}} projects=[[projects]]></incidents-view>
+          <map-view name="map"
+            itemstore=[[itemstore]]
+            featureitems=[[featureitems]]
+            chatitems=[[chatitems]]
+            activeuser=[[activeuser]]></map-view>
+        </iron-pages>
+
+      </app-header-layout>
+
+    </app-drawer-layout>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'main-app',
+
+      properties: {
+
+        page: {
+          type: String,
+          reflectToAttribute: true,
+          observer: '_pageChanged'
+        },
+        cowconfig: Object,
+        account: {
+            type: Object,
+        },
+        selectedproject: {
+            observer: '_projectChanged'
+        },
+        loggedin: {
+            observer: '_loggedinChanged'
+        }
+      },
+
+      observers: [
+        '_routePageChanged(routeData.page)'
+      ],
+      ready: function(){
+        this.cowconfig = config.cowconfig;
+
+
+        this.addEventListener('newincident',function(e){
+          var name = e.detail.msg.name;
+          var project = this.core.projects({});
+          var center = e.detail.msg.center;
+          var zoom = e.detail.msg.zoom;
+          project.data('name', name)
+                  .data('status','Actief')
+                  .data('type', 'Eagle')
+                  .data('location',{lat: center[1], lon: center[0], zoomlevel: zoom})
+                  .sync();
+
+
+        });
+     },
+      _routePageChanged: function(page) {
+        this.page = page || 'notloggedin';
+      },
+
+      _pageChanged: function(page) {
+        // load page import on demand.
+        this.importHref(this.resolveUrl(page + '-view.html'), null, null, true);
+      },
+      _loggedinChanged: function(loggedin){
+          if (loggedin){
+              this.page = 'incidents';
+          }
+          else {
+              this.page = 'notloggedin';
+          }
+      },
+      _userChanged: function(user){
+
+        /*
+      	if (!this.core.users(this.users[user].id)){
+      		this.core.users({_id: this.users[user].id}).sync();
+      	}
+        */
+      	this.core.user(this.users[user].id);
+        this.page = 'incidents';
+      },
+      _projectChanged: function(){
+         this.page = 'map';
+     },
+     _getProjectName: function(id){
+        return this.core.projects(id.toString()).data('name');
+     }
+
+    });
+
+  </script>
+
+</dom-module>

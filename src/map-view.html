@@ -1,0 +1,198 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/gm-elements/gm-geosearch.html">
+<link rel="import" href="../bower_components/mappu-elements/mappu-map.html">
+<link rel="import" href="../bower_components/mappu-elements/mappu-zoombuttons.html">
+<link rel="import" href="../bower_components/mappu-elements/mappu-drawbuttons.html">
+<link rel="import" href="../bower_components/mappu-elements/mappu-stylesets.html">
+<link rel="import" href="../bower_components/mappu-elements/mappu-cowlayer.html">
+<link rel="import" href="../bower_components/mappu-elements/mappu-layermanager.html">
+<link rel="import" href="./chat-view.html">
+
+<dom-module id="map-view">
+
+  <template>
+    <style include="iron-flex iron-flex-alignment"></style>
+    <style>
+      :host {
+        display: block;
+
+      }
+      #togglelayers {
+          background: grey;
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+      }
+      #togglechat {
+          background: grey;
+          position: absolute;
+          bottom: 60px;
+          right: 10px;
+      }
+      #mapelement {
+
+  		background: lightBlue;
+      }
+      #toast {
+          z-index: 1000;
+      }
+      	#eaglechat {
+            display: block;
+      		width: 300px;
+      	}
+        #geosearch {
+            display: block;
+            width: 300px;
+            margin-left: 10px;
+        }
+        #zoombuttons{
+    		position: absolute;
+    		bottom: 100px;
+    		left: 0px;
+    	}
+        #layermngr {
+    		position: absolute;
+    		right: 0px;
+    		bottom: 100px;
+    		z-index: 10001;
+    	}
+        #togglebuttons {
+            padding: 5px;
+        }
+
+    </style>
+    <paper-toast id="toast" text="{{toasttext}}"></paper-toast>
+    <paper-drawer-panel name='main' id='mainpanel' right-drawer>
+        <div drawer>
+            <chat-view id="eaglechat"
+                chatitems="[[chatitems]]"
+                store="[[itemstore]]"
+                activeuser="[[activeuser]]"
+                on-goto-location="gotolocation">
+            </chat-view>
+        </div>
+        <div main>
+
+            <mappu-map class='flex' id='mapelement' map="{{map}}">
+                <gm-geosearch id="geosearch"></gm-geosearch>
+                <iron-collapse id="layermngr" class='collapse-content' opened='[[layerstoggled]]'>
+                    LAyerManger
+                    <mappu-layermanager map="[[map]]"></mappu-layermanager>
+                </iron-collapse>
+                <mappu-zoombuttons id="zoombuttons" map="[[map]]"></mappu-zoombuttons>
+                <mappu-drawbuttons id="drawbuttons"
+                    map="[[map]]"
+                    styleset="[[styleset]]"
+                ></mappu-drawbuttons>
+                <div id='togglebuttons'>
+                    <paper-fab mini id='togglelayers' toggles icon="menu" active='{{layerstoggled}}'></paper-fab>
+                    <paper-fab mini id='togglechat' toggles icon="send" paper-drawer-toggle></paper-fab>
+                </div>
+                <mappu-stylesets styleset1="{{styleset}}"></mappu-stylesets>
+                <mappu-cowlayer
+                    id="cowlayer"
+                    map="[[map]]"
+                    features="[[featureitems]]"
+                    store="[[itemstore]]"
+                    layer="{{cowlayer}}">
+                </mappu-cowlayer>
+            </mappu-map>
+        </div>
+    </paper-drawer-panel>
+
+  </template>
+
+  <script>
+
+    Polymer({
+      is: 'map-view',
+      properties: {
+          itemstore: {
+              type: Object
+          },
+          featureitems: {
+              type: Array
+          },
+          activeuser: {
+              type: Object
+          }
+      },
+      ready: function(){
+          var self = this;
+          window.cowlayer = this.cowlayer;
+          var background = new d3.mappu.RasterLayer("Nachtkaart", {
+                  ogc_type: 'tms',
+                  url: "http://saturnus.geodan.nl/mapproxy/map/tms/1.0.0/nachtkaart/EPSG3857/{z}/{y}/{x}.png",
+                  visible: true,
+                  opacity: 0,
+                  config: {
+                      title: 'Nachtkaart'
+                  }
+              }).addTo(this.map);
+          
+          var ahnlayer = new d3.mappu.RasterLayer("Hoogtekaart", {
+                  ogc_type: 'wms',
+                  url: "http://t3.edugis.nl/tiles/tilecache.py",
+                  layers: 'hoogtes',
+                  visible: false,
+                  opacity: 0,
+                  config: {
+                      title: 'Hoogte maaiveld'
+                  }
+              }).addTo(this.map);
+          var floodlayer = new d3.mappu.VectorLayer('Overstroming',{
+                  reproject: true,
+                  style: {
+                      fill: 'none',
+                      stroke: 'steelBlue',
+                      'stroke-width': 2
+                  }
+          }).addTo(this.map);
+          floodlayer.setZIndex(0); //below sketch layer
+
+          this.addEventListener('featureReady',function(e){
+            var feature = e.detail;
+            self.itemstore.records({_id:feature.id.toString()}).data('type','feature').data('feature',feature).sync();
+          });
+          this.addEventListener('goto-coords',function(d){
+      		self.map.center = d.detail;
+
+  			self.map.redraw();
+      	  });
+      },
+      gotolocation: function(d){
+        var text = d.detail.text;
+        var items = this.featureitems.filter(function(d){
+        	return d.data('feature').properties
+        		&& d.data('feature').properties.label
+        		&& d.data('feature').properties.label == text;
+        });
+        if (items[0]){
+        	var feature = items[0].data('feature');
+        	this.$.cowlayer.layer.zoomToFeature(feature);
+        }
+        else {
+        	console.log('no location found');
+        	this.toasttext = 'No such location found';
+        	this.$.toast.show();
+        }
+      }
+    });
+
+  </script>
+
+</dom-module>

@@ -1,0 +1,161 @@
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/paper-input/paper-textarea.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/iron-icons/communication-icons.html">
+<link rel="import" href="../bower_components/iron-icons/notification-icons.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
+
+<dom-module id="chat-view">
+<style include="iron-flex iron-flex-alignment"></style>
+<style>
+	:host {
+        @apply(--layout-fit);
+        @apply(--layout-vertical);
+      }
+	.container {
+		@apply(--layout-flex);
+		@apply(--layout-vertical);
+		overflow: hidden;
+		height: 100%;
+	}
+
+	.me {
+		margin: 5px;
+		margin-left: 20px;
+		background: #ecffe8;
+		width: 80%;
+		font-size: 10pt;
+	}
+	.you {
+		margin: 5px;
+		background: white;
+		width: 80%;
+		font-size: 10pt;
+	}
+	.small {
+		font-size: 8pt;
+		color: grey;
+	}
+	.tags {
+		font-size: 8pt;
+		color: orange;
+		cursor: pointer;
+	}
+
+	#newmessage {
+		width: 75%;
+	}
+	#sendbutton {
+		color: orange;
+		position: absolute;
+		bottom: 10px;
+		right: 50px;
+	}
+	#list{
+		 @apply(--layout-flex);
+	}
+	.sendcontainer {
+		@apply(--layout-horizontal);
+      	@apply(--layout-end);
+		padding: 5px;
+		width: 80%;
+  	}
+
+</style>
+<template>
+
+
+ <div class="container">
+		<iron-list id="list" items="[[chatitems]]" as="item">
+			<template>
+				<div>
+					<paper-card class$="{{userclass(item)}}">
+						<div class="card-content">
+							<div><b>{{creator(item)}}</b>: {{item._data.text}}</div>
+							<template is='dom-repeat' items='{{tags(item._data.text)}}'>
+								<span class='tags' on-click='goto' value='{{item}}'>{{item}}</span>
+							</template>
+							<div class='small'>{{updated(item)}}</div>
+						</div>
+					</paper-card>
+
+				</div>
+				</template>
+		</iron-list>
+	<div class='sendcontainer'>
+		<paper-textarea class='flex' id="newmessage" label="Tik hier..." rows='4' max-rows='4'></paper-textarea>
+		<paper-icon-button id='sendbutton' icon="send" on-click='send'></paper-icon-button>
+	</div>
+</div>
+</template>
+</dom-module>
+
+<script>
+Polymer({
+    is: 'chat-view',
+	properties: {
+		reftime: {
+			value: function(){return new Date().getTime();}
+		},
+		chatitems: {
+			type: Array,
+			value: function(){return [];},
+			observer: '_chatitemsChanged'
+		},
+		store: {
+			type: Object
+		}
+	},
+	observers: [
+		//'_dataChanged(data,items)'
+	],
+	ready: function(){
+
+	},
+	domReady: function(){
+	},
+	updateme: function(a,b,c){
+		this.recentlyChanged = true;
+	},
+	_chatitemsChanged: function(){
+		this.$.list.scrollToIndex(this.chatitems.length);
+		this.$.list.fire('resize');
+	},
+	send: function(){
+		var message = this.$.newmessage.value;
+		var r = this.store.records({});
+		r.data({type: 'chat',text: message}).sync();
+		this.$.newmessage.value = '';
+	},
+	updated: function(d){
+		return new Date(parseInt(d.updated())).toLocaleString();
+	},
+	creator: function(d){
+		return d.creator()?d.creator().id():'anonymous';
+	},
+	userclass: function(d){
+		if (d.creator() && d.creator().id() && d.creator().id() == this.activeuser.id()){
+			return 'me';
+		}
+		else {
+			return 'you';
+		}
+	},
+	tags: function(text){
+		return text.split(' ').filter(function(d){return d.match('#')});
+	},
+	goto: function(event){
+		event.stopPropagation();
+		this.fire('goto-location',{text:event.target.value.replace('#','')});
+	}
+});
+</script>
+
+</polymer-element>

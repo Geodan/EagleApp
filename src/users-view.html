@@ -1,0 +1,47 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+
+<dom-module id="users-view">
+
+  <!-- Defines the element's style and local DOM -->
+  <template>
+      <style include="iron-flex iron-flex-alignment"></style>
+    <style>
+      :host {
+        display: block;
+        padding: 16px;
+      }
+
+    </style>
+    <div name='users'>
+     <h2>Aanmelden</h2>
+     <iron-selector selected="{{selecteduser}}" class='layout vertical'>
+        <template is='dom-repeat' items='[[users]]'>
+            <paper-item>[[item._data.name]]</paper-item>
+        </template>
+        </iron-selector>
+    </div>
+  </template>
+
+  <!-- Creates the element's prototype and registers it -->
+  <script>
+    Polymer({
+        is: 'users-view',
+        properties: {
+            route: Object,
+            users: Array,
+            selecteduser: {
+                type: String,
+                notify: true
+            }
+
+        },
+        ready: function(){
+
+        }
+    });
+  </script>
+
+</dom-module>
