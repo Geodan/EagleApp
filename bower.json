@@ -21,6 +21,5 @@
     "cow-elements": "GeodanElements/cow-elements#^0.0.2"
   },
   "devDependencies": {
-    "web-component-tester": "^4.0.0"
   }
 }
