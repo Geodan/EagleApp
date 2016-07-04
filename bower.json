@@ -15,11 +15,13 @@
     "iron-pages": "polymerelements/iron-pages#^1.0.0",
     "iron-selector": "polymerelements/iron-selector#^1.0.0",
     "paper-icon-button": "PolymerElements/paper-icon-button#~1.1.1",
-    "polymer": "polymer/polymer#^1.4.0",
-    "gm-elements": "GeodanElements/gm-elements#^0.0.2",
-    "mappu-elements": "GeodanElements/mappu-elements#^0.0.3",
-    "cow-elements": "GeodanElements/cow-elements#^0.0.2"
+    "polymer": "polymer/polymer#~1",
+    "gm-elements": "GeodanElements/gm-elements#~0",
+    "mappu-elements": "GeodanElements/mappu-elements#~0",
+    "cow-elements": "GeodanElements/cow-elements#~0"
   },
-  "devDependencies": {
+  "devDependencies": {},
+  "resolutions": {
+    "underscore": "~1.8"
   }
 }
