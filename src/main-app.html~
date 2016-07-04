@@ -71,9 +71,7 @@ Copyright (c) 2016 Geodan
       paper-item {
       	  cursor: pointer;
       }
-      iron-pages {
-      	  height: 100%;
-      }
+
 
     </style>
 
@@ -88,7 +86,7 @@ Copyright (c) 2016 Geodan
             account="{{account}}"
             loggedin="{{loggedin}}"
             ></gm-cas-core>
-    <cow-locator id="cow_locator" core="[[core]]"></cow-locator>
+
     <cow-core id="cow_core" config="[[cowconfig]]" core="{{core}}"></cow-core>
     <cow-connector id="cowconnector"
 		itemconfig = "{{itemconfig}}"
@@ -104,7 +102,6 @@ Copyright (c) 2016 Geodan
 		chatitems="{{chatitems}}"
 		itemstore="{{itemstore}}"
 		startlocation="{{startlocation}}"
-		peerlocations="{{peerlocations}}"
 		></cow-connector>
       <paper-dialog id='infodialog' opened="{{infodialog}}">
           <h2>Informatie</h2>
@@ -166,7 +163,6 @@ Copyright (c) 2016 Geodan
           <map-view name="map"
             itemstore=[[itemstore]]
             featureitems=[[featureitems]]
-            peerlocations=[[peerlocations]]
             chatitems=[[chatitems]]
             activeuser=[[activeuser]]></map-view>
         </iron-pages>
@@ -188,8 +184,7 @@ Copyright (c) 2016 Geodan
         page: {
           type: String,
           reflectToAttribute: true,
-          observer: '_pageChanged',
-          value: 'notloggedin'
+          observer: '_pageChanged'
         },
         cowconfig: Object,
         account: {
