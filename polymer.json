@@ -1,7 +1,8 @@
 {
   "entrypoint": "index.html",
-  "shell": "src/main-app.html",
+  "shell": "main-app.html",
   "fragments": [
+  	 "src/notloggedin-view.html",
      "src/users-view.html",
      "src/incidents-view.html",
      "src/map-view.html"
