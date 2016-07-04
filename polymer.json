@@ -2,7 +2,6 @@
   "entrypoint": "index.html",
   "shell": "src/main-app.html",
   "fragments": [
-     "src/chat-view.html",
      "src/users-view.html",
      "src/incidents-view.html",
      "src/map-view.html"
