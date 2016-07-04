@@ -16,12 +16,15 @@
 
     </style>
     <div name='users'>
-     <h2>Aanmelden</h2>
-     <iron-selector selected="{{selecteduser}}" class='layout vertical'>
-        <template is='dom-repeat' items='[[users]]'>
+     <h2>Gebruikers</h2>
+        <h3>Online</h3>
+        <template is='dom-repeat' items='[[onlineusers]]'>
             <paper-item>[[item._data.name]]</paper-item>
         </template>
-        </iron-selector>
+        <h3>Offline:</h3>
+        <template is='dom-repeat' items='[[offlineusers]]'>
+            <paper-item>[[item._data.name]]</paper-item>
+        </template>
     </div>
   </template>
 
@@ -31,7 +34,10 @@
         is: 'users-view',
         properties: {
             route: Object,
-            users: Array,
+            users: {
+                type: Array,
+                observer: '_usersChanged'
+            },
             selecteduser: {
                 type: String,
                 notify: true
@@ -40,6 +46,14 @@
         },
         ready: function(){
 
+        },
+        _usersChanged: function(users){
+            this.onlineusers = users.filter(function(d){
+                return d.isActive();
+            });
+            this.offlineusers = users.filter(function(d){
+                return !d.isActive();
+            });
         }
     });
   </script>
