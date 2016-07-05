@@ -1,0 +1,10 @@
+{
+  "entrypoint": "index.html",
+  "shell": "main-app.html",
+  "fragments": [
+     "users-view.html",
+     "incidents-view.html",
+     "map-view.html"
+     ]
+}
+
