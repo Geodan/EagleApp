@@ -16,6 +16,8 @@ Copyright (c) 2016 Geodan
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/cow-elements/cow-core.html">
@@ -105,6 +107,7 @@ Copyright (c) 2016 Geodan
 		itemstore="{{itemstore}}"
 		startlocation="{{startlocation}}"
 		peerlocations="{{peerlocations}}"
+		on-zoomto="zoomtoast"
 		></cow-connector>
       <paper-dialog id='infodialog' opened="{{infodialog}}">
           <h2>Informatie</h2>
@@ -115,6 +118,7 @@ Copyright (c) 2016 Geodan
               <paper-button dialog-confirm>OK</paper-button>
           </div>
       </paper-dialog>
+      
     <app-drawer-layout fullbleed>
 
       <!-- Drawer content -->
@@ -158,7 +162,10 @@ Copyright (c) 2016 Geodan
                 <template is="dom-if" if="[[!cowconnected]]">COW!</template>
           </app-toolbar>
         </app-header>
-
+        <paper-toast id='zoomtoast' horizontal-align='right' text="Zoom to requested" duration="0">
+			  <paper-button on-click="zoomtoextent" class="yellow-button">Zoom to extent</paper-button>
+			  <paper-button onclick="zoomtoast.close()" class="yellow-button">Close</paper-button>
+		</paper-toast>
         <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
           <notloggedin-view name='login'></notloggedin-view>
           <users-view name="users" selecteduser={{selecteduser}} users=[[users]]></users-view>
@@ -168,7 +175,11 @@ Copyright (c) 2016 Geodan
             featureitems=[[featureitems]]
             peerlocations=[[peerlocations]]
             chatitems=[[chatitems]]
-            activeuser=[[activeuser]]></map-view>
+            activeuser=[[activeuser]]
+            core=[[core]]
+            map={{map}}>
+            
+            </map-view>
         </iron-pages>
 
       </app-header-layout>
@@ -201,13 +212,12 @@ Copyright (c) 2016 Geodan
             observer: '_loggedinChanged'
         }
       },
-
+      
       observers: [
         '_routePageChanged(routeData.page)'
       ],
       ready: function(){
         this.cowconfig = config.cowconfig;
-
 
         this.addEventListener('newincident',function(e){
           var name = e.detail.msg.name;
@@ -223,6 +233,16 @@ Copyright (c) 2016 Geodan
 
         });
      },
+     zoomtoast: function(e){
+     	 this.$.zoomtoast.open();
+		 this._zoomrequest = e.detail.bbox;
+     },
+     zoomtoextent: function(){
+     	 this.$.zoomtoast.close();
+		  this.map.zoomToExtent(this._zoomrequest);
+		  this.map.redraw();
+      },
+      
       _routePageChanged: function(page) {
         this.page = page || 'notloggedin';
       },
