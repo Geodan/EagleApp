@@ -16,6 +16,8 @@ Copyright (c) 2016 Geodan
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/cow-elements/cow-core.html">
@@ -71,11 +73,13 @@ Copyright (c) 2016 Geodan
       paper-item {
       	  cursor: pointer;
       }
-
+      iron-pages {
+      	  height: 100%;
+      }
 
     </style>
 
-    <app-location route="{{route}}"></app-location>
+    <app-location route="{{route}}" path="[[page]]"></app-location>
     <app-route
         route="{{route}}"
         pattern="/:page"
@@ -86,7 +90,7 @@ Copyright (c) 2016 Geodan
             account="{{account}}"
             loggedin="{{loggedin}}"
             ></gm-cas-core>
-
+    <cow-locator id="cow_locator" core="[[core]]"></cow-locator>
     <cow-core id="cow_core" config="[[cowconfig]]" core="{{core}}"></cow-core>
     <cow-connector id="cowconnector"
 		itemconfig = "{{itemconfig}}"
@@ -102,6 +106,8 @@ Copyright (c) 2016 Geodan
 		chatitems="{{chatitems}}"
 		itemstore="{{itemstore}}"
 		startlocation="{{startlocation}}"
+		peerlocations="{{peerlocations}}"
+		on-zoomto="zoomtoast"
 		></cow-connector>
       <paper-dialog id='infodialog' opened="{{infodialog}}">
           <h2>Informatie</h2>
@@ -112,26 +118,26 @@ Copyright (c) 2016 Geodan
               <paper-button dialog-confirm>OK</paper-button>
           </div>
       </paper-dialog>
+      
     <app-drawer-layout fullbleed>
 
       <!-- Drawer content -->
       <app-drawer>
         <app-toolbar><img src="../images/app-icon-32.png"></app-toolbar>
         <gm-cas-icon
-            account=[[account]]
-            loggedin=[[loggedin]]
+            account='[[account]]'
+            loggedin='[[loggedin]]'
             ></gm-cas-icon>
 
-        <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
-        <!-- DISABLED ROUTING
-          <a name="teams" href="./teams">Team</a>
-          <template is="dom-if" if="[[account]]">
-              <a name="incidents" href="./incidents">Incident</a>
-          </template>
-          <template is="dom-if" if="[[curproject]]">
-              <a name="map" href="./map">Kaart</a>
-          </template>
-          -->
+        <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
+          <template is="dom-if" if="[[loggedin]]">
+			  <a name="users" href="/users">Personen</a>
+			  <a name="incidents" href="/incidents">Incident</a>
+			  <template is="dom-if" if="[[curproject]]">
+				  <a name="map" href="/map">Kaart</a>
+			  </template>
+			</template>
+        <!--
           <template is="dom-if" if="[[loggedin]]">
               <paper-item name='users'>Personen</paper-item>
               <paper-item name='incidents'>Incidenten</paper-item>
@@ -139,6 +145,7 @@ Copyright (c) 2016 Geodan
           <template is="dom-if" if="[[curproject]]">
               <paper-item name='map'>Kaart</paper-item>
           </template>
+          -->
         </iron-selector>
       </app-drawer>
 
@@ -155,16 +162,24 @@ Copyright (c) 2016 Geodan
                 <template is="dom-if" if="[[!cowconnected]]">COW!</template>
           </app-toolbar>
         </app-header>
-
+        <paper-toast id='zoomtoast' horizontal-align='right' text="Zoom to requested" duration="0">
+			  <paper-button on-click="zoomtoextent" class="yellow-button">Zoom to extent</paper-button>
+			  <paper-button onclick="zoomtoast.close()" class="yellow-button">Close</paper-button>
+		</paper-toast>
         <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
-          <notloggedin-view name='notloggedin'></notloggedin-view>
+          <notloggedin-view name='login'></notloggedin-view>
           <users-view name="users" selecteduser={{selecteduser}} users=[[users]]></users-view>
           <incidents-view name="incidents" selectedproject={{selectedproject}} projects=[[projects]]></incidents-view>
           <map-view name="map"
             itemstore=[[itemstore]]
             featureitems=[[featureitems]]
+            peerlocations=[[peerlocations]]
             chatitems=[[chatitems]]
-            activeuser=[[activeuser]]></map-view>
+            activeuser=[[activeuser]]
+            core=[[core]]
+            map={{map}}>
+            
+            </map-view>
         </iron-pages>
 
       </app-header-layout>
@@ -197,13 +212,12 @@ Copyright (c) 2016 Geodan
             observer: '_loggedinChanged'
         }
       },
-
+      
       observers: [
         '_routePageChanged(routeData.page)'
       ],
       ready: function(){
         this.cowconfig = config.cowconfig;
-
 
         this.addEventListener('newincident',function(e){
           var name = e.detail.msg.name;
@@ -219,6 +233,16 @@ Copyright (c) 2016 Geodan
 
         });
      },
+     zoomtoast: function(e){
+     	 this.$.zoomtoast.open();
+		 this._zoomrequest = e.detail.bbox;
+     },
+     zoomtoextent: function(){
+     	 this.$.zoomtoast.close();
+		  this.map.zoomToExtent(this._zoomrequest);
+		  this.map.redraw();
+      },
+      
       _routePageChanged: function(page) {
         this.page = page || 'notloggedin';
       },

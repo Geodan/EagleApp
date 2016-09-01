@@ -26,6 +26,13 @@ Copyright (c) 2016 Geodan
 <link rel="import" href="../bower_components/cow-elements/cow-locator.html">
 <link rel="import" href="../bower_components/gm-elements/gm-cas-core.html">
 <link rel="import" href="../bower_components/gm-elements/gm-cas-icon.html">
+<link rel="import" href="../bower_components/gm-elements/gm-docs-connector.html">
+<link rel="import" href="../bower_components/gm-elements/gm-docs-config.html">
+<link rel="import" href="teams-view.html">
+<link rel="import" href="incidents-view.html">
+<link rel="import" href="map-view.html">
+<link rel="import" href="scenario-manager.html">
+<link rel="import" href="notloggedin-view.html">
 
 <script src="../config/config.js"></script>
 
@@ -90,6 +97,18 @@ Copyright (c) 2016 Geodan
             account="{{account}}"
             loggedin="{{loggedin}}"
             ></gm-cas-core>
+     <gm-docs-connector
+     	account="[[account]]"
+     	configs="{{gmconfigs}}"
+     	layers="{{gmlayers}}"
+     	></gm-docs-connector>
+    <gm-docs-config
+     	account="[[account]]"
+     	configname="[[gmconfigname]]"
+     	config="{{gmconfig}}"
+     	layers="{{gmlayers}}"
+     	></gm-docs-config> 	
+     	
     <cow-locator id="cow_locator" core="[[core]]"></cow-locator>
     <cow-core id="cow_core" config="[[cowconfig]]" core="{{core}}"></cow-core>
     <cow-connector id="cowconnector"
@@ -109,6 +128,13 @@ Copyright (c) 2016 Geodan
 		peerlocations="{{peerlocations}}"
 		on-zoomto="zoomtoast"
 		></cow-connector>
+		
+	<scenario-manager
+	  	scenario="[[selectedscenario]]"
+	  	map="[[map]]"
+	  
+	  ></scenario-manager>	
+		
       <paper-dialog id='infodialog' opened="{{infodialog}}">
           <h2>Informatie</h2>
           <paper-dialog-scrollable>
@@ -169,15 +195,21 @@ Copyright (c) 2016 Geodan
         <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
           <notloggedin-view name='login'></notloggedin-view>
           <users-view name="users" selecteduser={{selecteduser}} users=[[users]]></users-view>
-          <incidents-view name="incidents" selectedproject={{selectedproject}} projects=[[projects]]></incidents-view>
+          <incidents-view name="incidents" 
+          	selectedproject="{{selectedproject}}" 
+          	projects="[[projects]]"
+          	gmconfigs="[[gmconfigs]]"
+          ></incidents-view>
           <map-view name="map"
-            itemstore=[[itemstore]]
-            featureitems=[[featureitems]]
-            peerlocations=[[peerlocations]]
-            chatitems=[[chatitems]]
-            activeuser=[[activeuser]]
-            core=[[core]]
-            map={{map}}>
+            itemstore="[[itemstore]]"
+            featureitems="[[featureitems]]"
+            peerlocations="[[peerlocations]]"
+            chatitems="[[chatitems]]"
+            activeuser="[[activeuser]]"
+            core="[[core]]"
+            startlocation="[[startlocation]]"
+            gmlayers="[[gmlayers]]"
+            map="{{map}}">
             
             </map-view>
         </iron-pages>
@@ -208,9 +240,13 @@ Copyright (c) 2016 Geodan
         selectedproject: {
             observer: '_projectChanged'
         },
+        selectedscenario: {
+        	type: String
+        },
         loggedin: {
             observer: '_loggedinChanged'
         }
+
       },
       
       observers: [
@@ -224,9 +260,13 @@ Copyright (c) 2016 Geodan
           var project = this.core.projects({});
           var center = e.detail.msg.center;
           var zoom = e.detail.msg.zoom;
+          var scenario = e.detail.msg.scenario || null;
+          var gmconfig = e.detail.msg.gmconfig || null;
           project.data('name', name)
                   .data('status','Actief')
                   .data('type', 'Eagle')
+                  .data('scenario', scenario)
+                  .data('gmconfig', gmconfig)
                   .data('location',{lat: center[1], lon: center[0], zoomlevel: zoom})
                   .sync();
 
@@ -249,14 +289,14 @@ Copyright (c) 2016 Geodan
 
       _pageChanged: function(page) {
         // load page import on demand.
-        this.importHref(this.resolveUrl(page + '-view.html'), null, null, true);
+        //TT: disabled lazy loading this.importHref(this.resolveUrl(page + '-view.html'), null, null, true);
       },
       _loggedinChanged: function(loggedin){
           if (loggedin){
               this.page = 'incidents';
           }
           else {
-              this.page = 'notloggedin';
+              this.page = 'login';
           }
       },
       _userChanged: function(user){
@@ -271,6 +311,9 @@ Copyright (c) 2016 Geodan
       },
       _projectChanged: function(){
          this.page = 'map';
+         this.selectedscenario = this.core.project().data('scenario');
+         this.gmconfigname = this.core.project().data('gmconfig').name;
+         this.gmconfigtitle = this.core.project().data('gmconfig').name;
      },
      _getProjectName: function(id){
         return this.core.projects(id.toString()).data('name');

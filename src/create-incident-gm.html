@@ -13,7 +13,7 @@
 <link rel="import" href="../bower_components/mappu-elements/mappu-map.html">
 <link rel="import" href="../bower_components/gm-elements/gm-geosearch.html">
 
-<dom-module id="create-incident">
+<dom-module id="create-incident-gm">
     <style include="iron-flex iron-flex-alignment"></style>
         <style>
         #mapelement {
@@ -36,10 +36,10 @@
          <h2>Nieuw incident</h2>
         <div id='inputs' class="layout horizontal">
             <paper-input id="name" class='input' label="Naam"></paper-input>
-            <paper-dropdown-menu id='scenario' class='input' label="Scenario">
-                <paper-menu class="dropdown-content" selected="0">
-                	<template is='dom-repeat' items=[[scenarios]]>
-                    	<paper-item>[[item]]</paper-item>
+            <paper-dropdown-menu id='config' class='input' label="Configuration">
+                <paper-menu class="dropdown-content" attr-for-selected="name">
+                	<template is='dom-repeat' items=[[configs]]>
+                    	<paper-item conf='[[item]]' name='[[item.name]]'>[[item.title]]</paper-item>
                     </template>
                 </paper-menu>
             </paper-dropdown-menu>
@@ -66,7 +66,7 @@
 <script>
 
     Polymer({
-        is: 'create-incident',
+        is: 'create-incident-gm',
         properties: {
             map: {
                 type: Object
@@ -76,22 +76,21 @@
             	type: Boolean,
             	notify: true
             },
-            scenarios: {
+            configs: {
             	type: Array,
-            	value: function(){
-            		return ['Default','Madrid']
-            	}
             }
         },
         add: function(a,b,c){
             var name = this.$.name.value;
             var center = this.$.mapelement.map.center;
             var zoom = this.$.mapelement.map.zoom;
-            var scenario = this.$.scenario.value;
+            var config = this.$.config.selectedItem.conf;
+            var scenario = config.title;
             this.fire('newincident',{msg: {
             	name: name, 
             	center: center, 
             	zoom: zoom,
+            	gmconfig: config,
             	scenario: scenario
             }});
         },
