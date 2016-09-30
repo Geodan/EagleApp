@@ -1,0 +1,68 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<dom-module id="scenario-manager">
+</dom-module>
+
+<script>
+
+    Polymer({
+        is: 'scenario-manager',
+        properties: {
+        	scenario: {
+        		type: String,
+        		observer: '_scenarioChanged'
+        	},
+        	map: {
+        		type: Object
+        	},
+        	layers: {
+        		type: Array,
+        		notify: true
+        	}
+        	
+        },
+        _scenarioChanged: function(scenario){
+        	console.log(scenario);
+        	var self = this;
+        	if (this.layers && this.layers.length > 0){
+				this.layers.forEach(function(layer){
+					self.map.removeLayer(layer);
+				});
+        	}
+        	switch (scenario){
+        		case 'Madrid':
+        			this.addMadridLayers();
+        			break;
+        		default: 
+        			//this.addDefaultLayers();
+        			console.warn('Scenario ' + scenario + ' not known');
+        			break;
+        	}
+        },
+        addMadridLayers: function(){
+        	var Provincias = new d3.mappu.RasterLayer("Provincias", {
+                  ogc_type: 'wms',
+                  url: "https://services.geodan.nl/data/ows/GEOD5980MADR/wms?",
+                  layers: 'geo_prov_1dd0e224-7905-4e2d-a880-f2f383d66adb',
+                  visible: true,
+                  opacity: 0,
+                  config: {
+                      title: 'Provincias'
+                  }
+            }).addTo(this.map);
+            this.layers = [Provincias];
+        },
+        addDefaultLayers: function(){
+        	var ahnlayer = new d3.mappu.RasterLayer("Hoogtekaart", {
+                  ogc_type: 'wms',
+                  url: "http://t3.edugis.nl/tiles/tilecache.py",
+                  layers: 'hoogtes',
+                  visible: false,
+                  opacity: 0,
+                  config: {
+                      title: 'Hoogte maaiveld'
+                  }
+              }).addTo(this.map);
+             this.layers = [ahnlayer];
+        }
+    });
+</script>

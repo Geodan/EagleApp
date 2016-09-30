@@ -11,6 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/gm-elements/gm-geosearch.html">
@@ -20,7 +21,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/mappu-elements/mappu-stylesets.html">
 <link rel="import" href="../bower_components/mappu-elements/mappu-cowlayer.html">
 <link rel="import" href="../bower_components/mappu-elements/mappu-layermanager.html">
-<link rel="import" href="./chat-view.html">
+<!--<link rel="import" href="./chat-view.html">-->
 
 <dom-module id="map-view">
 
@@ -29,31 +30,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <style>
       :host {
         display: block;
-
+        height: 100%;
       }
       #togglelayers {
+          background: grey;
+          position: absolute;
+          bottom: 50px;
+          right: 10px;
+      }
+      #shareextent {
           background: grey;
           position: absolute;
           bottom: 10px;
           right: 10px;
       }
-      #togglechat {
-          background: grey;
-          position: absolute;
-          bottom: 60px;
-          right: 10px;
-      }
       #mapelement {
-
   		background: lightBlue;
+  		height: 100%;
       }
       #toast {
           z-index: 1000;
       }
-      	#eaglechat {
-            display: block;
-      		width: 300px;
-      	}
         #geosearch {
             display: block;
             width: 300px;
@@ -73,47 +70,40 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         #togglebuttons {
             padding: 5px;
         }
+        .scroll {
+        	overflow: auto;
+        }
 
     </style>
+    <content></content>
     <paper-toast id="toast" text="{{toasttext}}"></paper-toast>
     <paper-drawer-panel name='main' id='mainpanel' right-drawer>
-        <div drawer>
-            <chat-view id="eaglechat"
-                chatitems="[[chatitems]]"
-                store="[[itemstore]]"
-                activeuser="[[activeuser]]"
-                on-goto-location="gotolocation">
-            </chat-view>
+        <div drawer class='scroll'>
+        	<mappu-layermanager map="[[map]]"></mappu-layermanager>
         </div>
         <div main>
-
-            <mappu-map class='flex' id='mapelement' map="{{map}}">
-                <gm-geosearch id="geosearch"></gm-geosearch>
-                <iron-collapse id="layermngr" class='collapse-content' opened='[[layerstoggled]]'>
-                    LAyerManger
-                    <mappu-layermanager map="[[map]]"></mappu-layermanager>
-                </iron-collapse>
-                <mappu-zoombuttons id="zoombuttons" map="[[map]]"></mappu-zoombuttons>
-                <mappu-drawbuttons id="drawbuttons"
-                    map="[[map]]"
-                    styleset="[[styleset]]"
-                ></mappu-drawbuttons>
-                <div id='togglebuttons'>
-                    <paper-fab mini id='togglelayers' toggles icon="menu" active='{{layerstoggled}}'></paper-fab>
-                    <paper-fab mini id='togglechat' toggles icon="send" paper-drawer-toggle></paper-fab>
-                </div>
-                <mappu-stylesets styleset1="{{styleset}}"></mappu-stylesets>
-                <mappu-cowlayer
-                    id="cowlayer"
-                    map="[[map]]"
-                    features="[[featureitems]]"
-                    store="[[itemstore]]"
-                    layer="{{cowlayer}}">
-                </mappu-cowlayer>
-            </mappu-map>
-        </div>
-    </paper-drawer-panel>
-
+			<mappu-map class='fit' id='mapelement' map="{{map}}">
+				<gm-geosearch id="geosearch"></gm-geosearch>
+				<mappu-zoombuttons id="zoombuttons" map="[[map]]"></mappu-zoombuttons>
+				<mappu-drawbuttons id="drawbuttons"
+					map="[[map]]"
+					styleset="[[styleset]]"
+				></mappu-drawbuttons>
+				<div id='togglebuttons'>
+					<paper-fab mini id='togglelayers' toggles icon="menu" active='{{layerstoggled}}'></paper-fab>
+					<paper-fab mini id='shareextent' icon="settings-ethernet" on-click="shareExtent"></paper-fab>
+				</div>
+				<mappu-stylesets styleset1="{{styleset}}"></mappu-stylesets>
+				<mappu-cowlayer
+					id="cowlayer"
+					map="[[map]]"
+					features="[[featureitems]]"
+					store="[[itemstore]]"
+					layer="{{cowlayer}}">
+				</mappu-cowlayer>
+			</mappu-map>
+		</div>
+	</paper-drawer-panel>
   </template>
 
   <script>
@@ -130,9 +120,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           activeuser: {
               type: Object
           },
+          startlocation: {
+          	  type: Object,
+          	  observer: '_startlocationChanged'
+          },
           peerlocations: {
           	  type: Array,
           	  observer: '_peerlocationsChanged'
+          },
+          map: {
+          	  type: Object,
+          	  notify: true
+          },
+          core: {
+          	  type: Object
+          },
+          gmlayers: {
+          	  type: Array,
+          	  observer: '_gmlayersChanged'
+          },
+          _oldgmlayers: {
+          	  type: Array,
+          	  value: function(){return [];}
           }
       },
       _peerlocationsChanged: function(locs){
@@ -140,39 +149,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       	  	  this.peerlayer.data = locs;
       	  }
       },
+      _gmlayersChanged: function(layers){
+      	  var self = this;
+      	  this._oldgmlayers.forEach(function(l){
+      	  		 self.map.removeLayer(l);
+      	  });
+      	  layers.forEach(function(l){
+      	  	  var style = l.style?l.style.name:null;
+			  var layer = new d3.mappu.RasterLayer(l.title,{
+				  ogc_type: 'wms',
+				  visible: l.isBaseLayer?true:l.options.visible,
+				  url: l.source.url,
+				  //TODO: style: 'GEOD5980MADR:'+l.source.featureName+':'+style,
+				  layers: l.source.featureName,
+				  opacity: 0,
+				  config: {
+					  title: l.title
+				  }
+			  });
+			  layer.addTo(self.map);
+			  self._oldgmlayers.push(layer);
+      	  });
+      },
       ready: function(){
           var self = this;
           window.cowlayer = this.cowlayer;
-          var background = new d3.mappu.RasterLayer("Nachtkaart", {
-                  ogc_type: 'tms',
-                  url: "http://saturnus.geodan.nl/mapproxy/map/tms/1.0.0/nachtkaart/EPSG3857/{z}/{y}/{x}.png",
-                  visible: true,
-                  opacity: 0,
-                  config: {
-                      title: 'Nachtkaart'
-                  }
-              }).addTo(this.map);
           
-          var ahnlayer = new d3.mappu.RasterLayer("Hoogtekaart", {
-                  ogc_type: 'wms',
-                  url: "http://t3.edugis.nl/tiles/tilecache.py",
-                  layers: 'hoogtes',
-                  visible: false,
-                  opacity: 0,
-                  config: {
-                      title: 'Hoogte maaiveld'
-                  }
-              }).addTo(this.map);
-          var floodlayer = new d3.mappu.VectorLayer('Overstroming',{
-                  reproject: true,
-                  style: {
-                      fill: 'none',
-                      stroke: 'steelBlue',
-                      'stroke-width': 2
-                  }
-                  
-          }).addTo(this.map);
-          floodlayer.setZIndex(0); //below sketch layer
+          
 
           this.peerlayer = new d3.mappu.VectorLayer('Gebruikers',{
                   reproject: true,
@@ -193,6 +196,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   			self.map.redraw();
       	  });
+      },
+      shareExtent: function(){
+			var extent = null;
+			var ll = this.map.extent[0];
+			var ur = this.map.extent[1];
+			var feat = {type: "Feature", bbox: [ll[0], ll[1], ur[0], ur[1]], geometry: {type: 'Point', coordinates: [0,0]}};
+			this.core.messenger().sendData({command: 'ZoomToBbox',data: feat}, 'command');
+		},
+		_startlocationChanged: function(data){
+      	  var self = this;
+      	  
+      	  window.setTimeout(function(){
+      	  	  self.map.resize();
+      	  	  self.map.center = [data.lng || data.lon, data.lat];
+      	  	  self.map.redraw();
+      	  	  self.map.zoom = data.zoomlevel;
+      	  	  self.map.redraw();
+      	  },1000);
       },
       gotolocation: function(d){
         var text = d.detail.text;

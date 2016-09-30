@@ -1,6 +1,6 @@
 {
   "entrypoint": "index.html",
-  "shell": "main-app.html",
+  "shell": "src/main-app.html",
   "fragments": [
   	 "src/notloggedin-view.html",
      "src/users-view.html",
