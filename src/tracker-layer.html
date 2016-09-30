@@ -1,0 +1,51 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<dom-module id="tracker-layer">
+
+  <!-- Defines the element's style and local DOM -->
+  <template>
+      
+    <style>
+      :host {
+      
+      }
+
+    </style>
+    
+  </template>
+
+  <!-- Creates the element's prototype and registers it -->
+  <script>
+    Polymer({
+        is: 'tracker-layer',
+        properties: {
+        	map: {
+        		type: Object
+        	}
+        },
+        observers: [
+        	'_mapChanged(map)'
+        ],
+        _mapChanged: function(map){
+        	var layer = new d3.mappu.VectorLayer('Tracker',{
+					reproject: true,
+        			style: {
+						stroke: 'orange',
+						fill: 'orange',
+						'stroke-width': 2
+					},
+					labelfield: 'name'
+        	}).addTo(map);
+        	var url = 'http://saturnus.geodan.nl/geoserver/traccar/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=traccar:vw_cur_position&outputFormat=application%2Fjson';
+        	d3.json(url,function(d){
+        		layer.data = d.features;
+        	});
+        },
+        ready: function(){
+
+        },
+        
+    });
+  </script>
+
+</dom-module>
